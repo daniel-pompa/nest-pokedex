@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { Pokemon } from './entities/pokemon.entity';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
@@ -12,25 +12,72 @@ export class PokemonService {
     private readonly pokemonModel: Model<Pokemon>,
   ) {}
 
-  async create(createPokemonDto: CreatePokemonDto) {
+  async create(createPokemonDto: CreatePokemonDto): Promise<Pokemon> {
     createPokemonDto.name = createPokemonDto.name.toLowerCase();
     const pokemon = await this.pokemonModel.create(createPokemonDto);
     return pokemon;
   }
 
-  findAll() {
-    return `This action returns all pokemon`;
+  async findAll(limit = 10, offset = 0): Promise<Pokemon[]> {
+    return this.pokemonModel
+      .find()
+      .limit(limit)
+      .skip(offset)
+      .sort({ pokemonNumber: 1 })
+      .select('-__v');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} pokemon`;
+  async findOne(searchTerm: string): Promise<Pokemon> {
+    searchTerm = searchTerm.trim().toLowerCase();
+
+    let pokemon: Pokemon | null = null;
+
+    const pokemonNumber = Number(searchTerm);
+
+    if (!isNaN(pokemonNumber)) {
+      pokemon = await this.pokemonModel.findOne({ pokemonNumber });
+    }
+
+    if (!pokemon && isValidObjectId(searchTerm)) {
+      pokemon = await this.pokemonModel.findById(searchTerm);
+    }
+
+    if (!pokemon) {
+      pokemon = await this.pokemonModel.findOne({ name: searchTerm });
+    }
+
+    if (!pokemon) {
+      throw new NotFoundException(
+        `Pokemon with search term "${searchTerm}" not found`,
+      );
+    }
+
+    return pokemon;
   }
 
-  update(id: number, updatePokemonDto: UpdatePokemonDto) {
-    return `This action updates a #${id} pokemon`;
+  async update(
+    searchTerm: string,
+    updatePokemonDto: UpdatePokemonDto,
+  ): Promise<Pokemon> {
+    const pokemon = await this.findOne(searchTerm);
+
+    if (updatePokemonDto.name) {
+      updatePokemonDto.name = updatePokemonDto.name.toLowerCase();
+    }
+
+    pokemon.set(updatePokemonDto);
+
+    await pokemon.save();
+
+    return pokemon;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} pokemon`;
+  async remove(id: string) {
+    const { deletedCount } = await this.pokemonModel.deleteOne({ _id: id });
+
+    if (deletedCount === 0) {
+      throw new NotFoundException(`Pokemon with id "${id}" not found`);
+    }
+    return;
   }
 }
