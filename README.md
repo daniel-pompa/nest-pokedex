@@ -104,6 +104,17 @@ npm run start:dev
 > [!NOTE]
 > By default, the API will be available at <http://localhost:3000>
 
+8. **Seed the database:**
+
+To populate your local database with the initial Pokémon data, execute the following request (you can use your browser or Postman)
+
+```http
+GET http://localhost:3000/api/v2/seed
+```
+
+>[!IMPORTANT]
+> This process will clear any existing data in the pokemons collection and insert the first 100 records from the PokéAPI.
+
 ## Available Scripts
 
 | Command | Description |
@@ -112,6 +123,29 @@ npm run start:dev
 | `npm run build` | Compiles the application into the `dist` directory. |
 | `npm run start:prod` | Runs the compiled application in production mode. |
 | `npm run lint` | Runs ESLint to detect and fix code style issues. |
+
+## API Endpoints
+
+Once the database is seeded, you can interact with the following endpoints.
+
+> [!IMPORTANT]
+> **Base URL:** All API requests must be made to: `http://localhost:3000/api/v2`
+
+### Pokémon Collection
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/pokemon` | Retrieve all Pokémon (supports pagination). |
+| `GET` | `/pokemon/:term` | Find a Pokémon by **ID**, **Name**, or **pokemonNumber**. |
+| `POST` | `/pokemon` | Create a new Pokémon in the database. |
+| `PATCH` | `/pokemon/:term` | Update a Pokémon's data by term. |
+| `DELETE` | `/pokemon/:id` | Remove a Pokémon (requires a valid MongoID). |
+
+### Database Seeding
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/seed` | **Reset** and populate the database with 100 records. |
 
 ## License
 
