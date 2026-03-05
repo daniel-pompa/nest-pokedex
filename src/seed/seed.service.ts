@@ -1,35 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import type { Model } from 'mongoose';
 import { Pokemon } from '../pokemon/entities/pokemon.entity';
-import { PokeAPIResponse } from './interfaces/poke-response.interface';
+import type { PokeAPIResponse } from './interfaces/poke-response.interface';
+import type { HttpAdapter } from '../common/interfaces/http-adapter.interface';
 
 @Injectable()
 export class SeedService {
   constructor(
-    private readonly httpService: HttpService,
     @InjectModel(Pokemon.name)
     private readonly pokemonModel: Model<Pokemon>,
+
+    @Inject('HTTP_ADAPTER')
+    private readonly http: HttpAdapter,
   ) {}
 
   async executeSeed() {
-    // 1. We clean the database
     await this.pokemonModel.deleteMany({});
 
-    // 2. API request limited to 100
-    const { data } = await firstValueFrom(
-      this.httpService.get<PokeAPIResponse>('pokemon?limit=100'),
+    const data = await this.http.get<PokeAPIResponse>(
+      'https://pokeapi.co/api/v2/pokemon?limit=100',
     );
 
-    // 3. Data transformation
     const pokemonToInsert = data.results.map(({ name, url }) => {
       const pokemonNumber = +url.split('/').at(-2)!;
       return { name: name.toLowerCase(), pokemonNumber };
     });
 
-    // 4. Insertion of the new 100 records
     await this.pokemonModel.insertMany(pokemonToInsert);
 
     return {
