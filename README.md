@@ -135,11 +135,14 @@ Once the database is seeded, you can interact with the following endpoints.
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/pokemon` | Retrieve all Pokémon (supports pagination). |
+| `GET` | `/pokemon?limit=10&offset=0` | Retrieve Pokémon with **pagination**. |
 | `GET` | `/pokemon/:term` | Find a Pokémon by **ID**, **Name**, or **pokemonNumber**. |
 | `POST` | `/pokemon` | Create a new Pokémon in the database. |
 | `PATCH` | `/pokemon/:term` | Update a Pokémon's data by term. |
 | `DELETE` | `/pokemon/:id` | Remove a Pokémon (requires a valid MongoID). |
+
+> [!TIP]
+> **Pagination Defaults:** If not specified, `limit` defaults to **10** and `offset` to **0**.
 
 ### Database Seeding
 
